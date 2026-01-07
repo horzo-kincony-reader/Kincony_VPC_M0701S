@@ -239,7 +239,8 @@ class VPC_M0701S_Reader:
     
     def __enter__(self):
         """Context manager entry."""
-        self.connect()
+        if not self.connect():
+            raise ConnectionError("Failed to connect to inverter")
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
