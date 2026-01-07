@@ -88,7 +88,7 @@ class VPC_M0701S_Reader:
         Returns:
             List of register values, or None if error
         """
-        if not self.client or not self.client.is_socket_open():
+        if not self.client or not self.client.connected:
             self.logger.error("Not connected to inverter")
             return None
         
@@ -119,7 +119,7 @@ class VPC_M0701S_Reader:
         Returns:
             True if successful, False otherwise
         """
-        if not self.client or not self.client.is_socket_open():
+        if not self.client or not self.client.connected:
             self.logger.error("Not connected to inverter")
             return False
         

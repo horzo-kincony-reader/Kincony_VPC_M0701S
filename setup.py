@@ -8,13 +8,19 @@ import os
 
 # Read README for long description
 def read_readme():
-    with open("README.md", "r", encoding="utf-8") as f:
-        return f.read()
+    try:
+        with open("README.md", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "VPC-M0701S Inverter Reader - Python library for Kincony VPC-M0701S frequency inverters"
 
 # Read requirements
 def read_requirements():
-    with open("requirements.txt", "r", encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    try:
+        with open("requirements.txt", "r", encoding="utf-8") as f:
+            return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    except FileNotFoundError:
+        return ["pymodbus>=3.6.0", "pyserial>=3.5", "pyyaml>=6.0"]
 
 setup(
     name="vpc-m0701s-reader",
