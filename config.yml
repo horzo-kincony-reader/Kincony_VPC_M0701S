@@ -1,0 +1,27 @@
+# VPC-M0701S Inverter Configuration
+inverter:
+  # Serial port settings
+  port: /dev/ttyUSB0  # COM port for Windows (e.g., COM3)
+  baudrate: 9600
+  bytesize: 8
+  parity: N  # N - None, E - Even, O - Odd
+  stopbits: 1
+  timeout: 1.0  # seconds
+  
+  # MODBUS settings
+  slave_id: 1  # MODBUS slave address (1-247)
+  
+  # Common register addresses (adjust based on actual device documentation)
+  registers:
+    # Status registers (read-only)
+    output_frequency: 0x0000  # Output frequency (Hz)
+    output_current: 0x0001    # Output current (A)
+    output_voltage: 0x0002    # Output voltage (V)
+    dc_bus_voltage: 0x0003    # DC bus voltage (V)
+    inverter_status: 0x0004   # Inverter status
+    fault_code: 0x0005        # Fault code
+    
+    # Control registers (read-write)
+    frequency_setpoint: 0x1000  # Frequency setpoint (Hz)
+    run_command: 0x1001         # Run/Stop command
+    direction: 0x1002           # Direction (forward/reverse)
