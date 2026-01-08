@@ -1,0 +1,181 @@
+{
+  "name": "VPC M0701S Home Assistant Configuration",
+  "version": "1.0.0",
+  "description": "Home Assistant MQTT integration for VPC M0701S inverter",
+  
+  "mqtt": {
+    "sensor": [
+      {
+        "name": "VPC M0701S Frequency",
+        "state_topic": "inverter/vpc_m0701s/0/frequency",
+        "unit_of_measurement": "Hz",
+        "value_template": "{{ value | float }}",
+        "device_class": "frequency",
+        "icon": "mdi:sine-wave"
+      },
+      {
+        "name": "VPC M0701S Current",
+        "state_topic": "inverter/vpc_m0701s/0/current",
+        "unit_of_measurement": "A",
+        "value_template": "{{ value | float }}",
+        "device_class": "current",
+        "icon": "mdi:current-ac"
+      },
+      {
+        "name": "VPC M0701S Voltage",
+        "state_topic": "inverter/vpc_m0701s/0/voltage",
+        "unit_of_measurement": "V",
+        "value_template": "{{ value | float }}",
+        "device_class": "voltage",
+        "icon": "mdi:flash"
+      },
+      {
+        "name": "VPC M0701S Power",
+        "state_topic": "inverter/vpc_m0701s/0/power",
+        "unit_of_measurement": "kW",
+        "value_template": "{{ value | float }}",
+        "device_class": "power",
+        "icon": "mdi:lightning-bolt"
+      },
+      {
+        "name": "VPC M0701S Temperature",
+        "state_topic": "inverter/vpc_m0701s/0/temperature",
+        "unit_of_measurement": "°C",
+        "value_template": "{{ value | float }}",
+        "device_class": "temperature",
+        "icon": "mdi:thermometer"
+      },
+      {
+        "name": "VPC M0701S RPM",
+        "state_topic": "inverter/vpc_m0701s/0/rpm",
+        "unit_of_measurement": "RPM",
+        "value_template": "{{ value | int }}",
+        "icon": "mdi:speedometer"
+      }
+    ],
+    
+    "binary_sensor": [
+      {
+        "name": "VPC M0701S Running",
+        "state_topic": "inverter/vpc_m0701s/0/status",
+        "value_template": "{{ 'ON' if value_json.status | int | bitwise_and(2) else 'OFF' }}",
+        "device_class": "running",
+        "icon": "mdi:engine"
+      },
+      {
+        "name": "VPC M0701S Fault",
+        "state_topic": "inverter/vpc_m0701s/0/status",
+        "value_template": "{{ 'ON' if value_json.faultCode | int > 0 else 'OFF' }}",
+        "device_class": "problem",
+        "icon": "mdi:alert-circle"
+      }
+    ],
+    
+    "switch": [
+      {
+        "name": "VPC M0701S Control",
+        "command_topic": "inverter/vpc_m0701s/0/command",
+        "state_topic": "inverter/vpc_m0701s/0/status",
+        "value_template": "{{ 'ON' if value_json.status | int | bitwise_and(2) else 'OFF' }}",
+        "payload_on": "START",
+        "payload_off": "STOP",
+        "icon": "mdi:power"
+      }
+    ],
+    
+    "number": [
+      {
+        "name": "VPC M0701S Frequency Setpoint",
+        "command_topic": "inverter/vpc_m0701s/0/frequency/set",
+        "state_topic": "inverter/vpc_m0701s/0/frequency",
+        "min": 0,
+        "max": 400,
+        "step": 0.1,
+        "unit_of_measurement": "Hz",
+        "mode": "slider",
+        "icon": "mdi:sine-wave"
+      }
+    ],
+    
+    "button": [
+      {
+        "name": "VPC M0701S Reset Fault",
+        "command_topic": "inverter/vpc_m0701s/0/command",
+        "payload_press": "RESET",
+        "icon": "mdi:restart"
+      },
+      {
+        "name": "VPC M0701S Emergency Stop",
+        "command_topic": "inverter/vpc_m0701s/0/command",
+        "payload_press": "EMERGENCY_STOP",
+        "icon": "mdi:stop-circle"
+      }
+    ]
+  },
+  
+  "lovelace_card_example": {
+    "type": "vertical-stack",
+    "cards": [
+      {
+        "type": "entities",
+        "title": "VPC M0701S Inverter",
+        "entities": [
+          {
+            "entity": "switch.vpc_m0701s_control",
+            "name": "Motor Control"
+          },
+          {
+            "entity": "number.vpc_m0701s_frequency_setpoint",
+            "name": "Frequency"
+          },
+          {
+            "entity": "sensor.vpc_m0701s_frequency",
+            "name": "Current Frequency"
+          },
+          {
+            "entity": "sensor.vpc_m0701s_current",
+            "name": "Current"
+          },
+          {
+            "entity": "sensor.vpc_m0701s_voltage",
+            "name": "Voltage"
+          },
+          {
+            "entity": "sensor.vpc_m0701s_power",
+            "name": "Power"
+          },
+          {
+            "entity": "sensor.vpc_m0701s_temperature",
+            "name": "Temperature"
+          },
+          {
+            "entity": "sensor.vpc_m0701s_rpm",
+            "name": "Motor RPM"
+          },
+          {
+            "entity": "binary_sensor.vpc_m0701s_running",
+            "name": "Status"
+          },
+          {
+            "entity": "binary_sensor.vpc_m0701s_fault",
+            "name": "Fault"
+          },
+          {
+            "entity": "button.vpc_m0701s_reset_fault",
+            "name": "Reset Fault"
+          }
+        ]
+      },
+      {
+        "type": "history-graph",
+        "title": "Inverter History",
+        "entities": [
+          "sensor.vpc_m0701s_frequency",
+          "sensor.vpc_m0701s_current",
+          "sensor.vpc_m0701s_power"
+        ],
+        "hours_to_show": 24
+      }
+    ]
+  }
+}

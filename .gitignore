@@ -1,0 +1,44 @@
+# Arduino/ESP32
+*.bin
+*.hex
+*.elf
+*.map
+
+# Build artifacts
+build/
+.build/
+*.o
+*.a
+
+# IDE files
+.vscode/
+.idea/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+*.tmp
+*.bak
+
+# Note: config.h is included as a template
+# Users should update with their own credentials
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+venv/
+env/
+
+# Logs
+*.log
