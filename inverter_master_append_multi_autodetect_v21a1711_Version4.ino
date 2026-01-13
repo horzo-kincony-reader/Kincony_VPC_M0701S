@@ -13,6 +13,35 @@
   - Endpointy: active, regs, cmd, config, rs485, rtu_diag, wifi
 */
 
+/*
+ * VPC-M0701S INTEGRATION NOTES:
+ * 
+ * This version adds per-SID inverter type configuration, allowing each of the 6 SIDs
+ * to be independently configured as either ME300 or VPC-M0701S type.
+ * 
+ * Configuration is stored in NVS namespace "invSIDcfg" with keys:
+ *   - s<N>_type: 0=ME300, 1=VPC
+ *   - s<N>_addr: Modbus address (1-247)
+ *   - s<N>_base: Address base (40001 for 4xxxx notation, 0 for raw)
+ *   - s<N>_fdiv, cdiv, vdiv, tdiv: Scaling divisors
+ *   - s<N>_rfc: Read function code (0=auto, 3=FC03, 4=FC04)
+ * 
+ * VPC operations in taskPoll():
+ *   - For VPC-type SIDs, reads telemetry via VPC_readTelemetry()
+ *   - Maps to ModbusTCP Iregs: fault(0), status(1), setfreq(2), runfreq(3), 
+ *     current(4), voltage(5), temp(6)
+ * 
+ * VPC operations in taskWrites():
+ *   - Writes control word to P103 via VPC_writeControlWord()
+ *   - Writes frequency to P102 via VPC_writeSetFrequency()
+ *   - Handles fault reset when HREG flags bit 0x0002 is set
+ * 
+ * Web UI endpoints:
+ *   - /inverter_master: Configuration table with per-SID type selector
+ *   - /inverter_master/config GET: Returns JSON with all SID configurations
+ *   - /inverter_master/config POST: Saves JSON configuration to NVS
+ */
+
 #include <Arduino.h>
 #include <WebServer.h>
 #include <Preferences.h>
