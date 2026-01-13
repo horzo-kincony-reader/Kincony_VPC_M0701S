@@ -1,0 +1,2 @@
+29c1aac Initial plan
+399baad WIP: lokalne zmiany przed rebase

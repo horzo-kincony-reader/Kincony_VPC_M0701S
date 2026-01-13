@@ -64,36 +64,21 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Upewnij się, że gałąź istnieje i jest aktywna
-# Sprawdź czy gałąź istnieje zdalnie używając ls-remote
-$remoteBranchCheck = git ls-remote --heads origin "refs/heads/$Branch" 2>&1
-$remoteBranchExists = ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($remoteBranchCheck))
+# Sprawdź czy gałąź istnieje zdalnie
+$remoteExists = git rev-parse --verify "origin/$Branch" 2>&1
+$remoteBranchExists = ($LASTEXITCODE -eq 0)
 
 # Sprawdź czy gałąź istnieje lokalnie
 $localExists = git branch --list $Branch 2>&1
 $localBranchExists = -not [string]::IsNullOrWhiteSpace($localExists)
 
 if ($remoteBranchExists) {
-  Write-Host "Remote branch 'origin/$Branch' exists. Fetching and creating/updating local branch to track it..."
-  # Fetch the specific branch with full refspec to create remote tracking branch
-  git fetch origin "${Branch}:refs/remotes/origin/$Branch" 2>&1 | Out-Null
+  Write-Host "Remote branch 'origin/$Branch' exists. Creating/updating local branch to track it..."
+  git checkout -B $Branch "origin/$Branch"
   if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Failed to fetch origin/$Branch into remote tracking branch"
+    throw "Failed to checkout branch $Branch from origin/$Branch"
   }
-  
-  # Try to checkout the branch - git will automatically set up tracking if it doesn't exist locally
-  $checkoutOutput = git checkout $Branch 2>&1
-  if ($LASTEXITCODE -ne 0) {
-    # If checkout failed, the branch doesn't exist locally, so create it
-    git checkout -b $Branch "origin/$Branch" 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-      throw "Failed to checkout/create branch $Branch from origin/$Branch"
-    }
-  }
-  
-  # Ensure tracking is set up (may fail in shallow clones, which is OK)
-  git branch -u "origin/$Branch" $Branch 2>&1 | Out-Null
-  
-  Write-Host "Switched to branch '$Branch' (from origin/$Branch)"
+  Write-Host "Switched to branch '$Branch' (tracking origin/$Branch)"
 } elseif ($localBranchExists) {
   $curBranch = git rev-parse --abbrev-ref HEAD 2>&1
   if ($LASTEXITCODE -ne 0) {
