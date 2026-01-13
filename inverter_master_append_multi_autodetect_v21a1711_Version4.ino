@@ -530,7 +530,89 @@ void AutoMultiInverter::checkNVSStats(){}
 void AutoMultiInverter::clearRTUKeys(){}
 
 // API stubs (to be implemented for configuration endpoints)
-void AutoMultiInverter::page(){}
+void AutoMultiInverter::page(){
+  if(!auth()) return;
+  
+  String html = "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Inverter Master Config</title>"
+                "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+                "<style>"
+                "body{font-family:Arial;margin:20px;background:#f5f5f5}"
+                "table{border-collapse:collapse;width:100%;background:#fff}"
+                "th,td{border:1px solid #ddd;padding:8px;text-align:left}"
+                "th{background:#1976d2;color:#fff}"
+                "select,input{padding:6px;border:1px solid #ccc;border-radius:4px}"
+                ".btn{padding:10px 14px;background:#1976d2;color:#fff;border:none;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-block;margin:4px}"
+                "</style>"
+                "<script>"
+                "async function loadConfig(){"
+                "  try{"
+                "    const cfg = await fetch('/inverter_master/config').then(r=>r.json());"
+                "    for(let s of cfg.sids){"
+                "      document.getElementById('type_'+s.sid).value = s.type;"
+                "      document.getElementById('addr_'+s.sid).value = s.vpc_addr;"
+                "      document.getElementById('base_'+s.sid).value = s.vpc_addr_base;"
+                "      document.getElementById('fdiv_'+s.sid).value = s.vpc_freq_div;"
+                "      document.getElementById('cdiv_'+s.sid).value = s.vpc_curr_div;"
+                "      document.getElementById('vdiv_'+s.sid).value = s.vpc_volt_div;"
+                "      document.getElementById('tdiv_'+s.sid).value = s.vpc_temp_div;"
+                "      document.getElementById('rfc_'+s.sid).value = s.vpc_read_fc;"
+                "    }"
+                "  }catch(e){console.error(e);}"
+                "}"
+                "async function saveConfig(){"
+                "  const sids = [];"
+                "  for(let sid=1; sid<=6; sid++){"
+                "    sids.push({"
+                "      sid: sid,"
+                "      type: document.getElementById('type_'+sid).value,"
+                "      vpc_addr: parseInt(document.getElementById('addr_'+sid).value),"
+                "      vpc_addr_base: parseInt(document.getElementById('base_'+sid).value),"
+                "      vpc_freq_div: parseInt(document.getElementById('fdiv_'+sid).value),"
+                "      vpc_curr_div: parseInt(document.getElementById('cdiv_'+sid).value),"
+                "      vpc_volt_div: parseInt(document.getElementById('vdiv_'+sid).value),"
+                "      vpc_temp_div: parseInt(document.getElementById('tdiv_'+sid).value),"
+                "      vpc_read_fc: parseInt(document.getElementById('rfc_'+sid).value)"
+                "    });"
+                "  }"
+                "  try{"
+                "    await fetch('/inverter_master/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sids:sids})});"
+                "    alert('Configuration saved!');"
+                "  }catch(e){alert('Error: '+e);}"
+                "}"
+                "window.onload = loadConfig;"
+                "</script>"
+                "</head><body>"
+                "<h2>Inverter Master Configuration (Per-SID)</h2>"
+                "<table>"
+                "<tr><th>SID</th><th>Type</th><th>VPC Addr</th><th>Addr Base</th><th>Freq Div</th><th>Curr Div</th><th>Volt Div</th><th>Temp Div</th><th>Read FC</th></tr>";
+  
+  for(uint8_t i=0; i<MAX_INV; i++){
+    uint8_t sid = SID_CANDIDATES[i];
+    html += "<tr><td>" + String(sid) + "</td>";
+    html += "<td><select id='type_" + String(sid) + "'><option value='me300'>ME300</option><option value='vpc'>VPC-M0701S</option></select></td>";
+    html += "<td><input type='number' id='addr_" + String(sid) + "' min='1' max='247' value='" + String(sid) + "'></td>";
+    html += "<td><input type='number' id='base_" + String(sid) + "' value='40001'></td>";
+    html += "<td><input type='number' id='fdiv_" + String(sid) + "' value='100'></td>";
+    html += "<td><input type='number' id='cdiv_" + String(sid) + "' value='100'></td>";
+    html += "<td><input type='number' id='vdiv_" + String(sid) + "' value='10'></td>";
+    html += "<td><input type='number' id='tdiv_" + String(sid) + "' value='1'></td>";
+    html += "<td><select id='rfc_" + String(sid) + "'><option value='0'>Auto</option><option value='3'>FC03</option><option value='4'>FC04</option></select></td>";
+    html += "</tr>";
+  }
+  
+  html += "</table>"
+          "<p><button class='btn' onclick='saveConfig()'>Save Configuration</button> "
+          "<a class='btn' href='/'>Back</a></p>"
+          "<p><small>Type: ME300 for existing ME300 inverters, VPC-M0701S for VPC inverters<br>"
+          "VPC Addr: Modbus slave address (1-247)<br>"
+          "Addr Base: 40001 for 4xxxx notation, 0 for raw addresses<br>"
+          "Scaling Divisors: Freq/Curr/Volt/Temp raw value divisors (e.g., 5000/100=50.00Hz)<br>"
+          "Read FC: 0=Auto fallback, 3=FC03 only, 4=FC04 only</small></p>"
+          "</body></html>";
+  
+  server.send(200, "text/html", html);
+}
+
 void AutoMultiInverter::apiActive(){}
 void AutoMultiInverter::apiActiveRaw(){}
 void AutoMultiInverter::apiRegs(){}
