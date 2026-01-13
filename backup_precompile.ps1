@@ -82,13 +82,13 @@ if ($curBranch -ne $Branch) {
   if ($remoteBranchExists) {
     Write-Host "Remote branch 'origin/$Branch' exists. Fetching and creating/updating local branch to track it..."
     # Fetch the specific branch with full refspec to create remote tracking branch
-    git fetch origin "${Branch}:refs/remotes/origin/$Branch" 2>&1 | Out-Null
+    git fetch origin "+refs/heads/${Branch}:refs/remotes/origin/$Branch" 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
       Write-Warning "Failed to fetch origin/$Branch into remote tracking branch"
     }
     
-    # Try to checkout the branch - git will automatically set up tracking if it doesn't exist locally
-    $checkoutOutput = git checkout $Branch 2>&1
+    # Try to checkout the branch
+    git checkout $Branch 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
       # If checkout failed, the branch doesn't exist locally, so create it
       git checkout -b $Branch "origin/$Branch" 2>&1 | Out-Null
@@ -98,7 +98,10 @@ if ($curBranch -ne $Branch) {
     }
     
     # Ensure tracking is set up (may fail in shallow clones, which is OK)
-    git branch -u "origin/$Branch" $Branch 2>&1 | Out-Null
+    $trackingResult = git branch -u "origin/$Branch" $Branch 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-Verbose "Note: Could not set up branch tracking (exit code: $LASTEXITCODE). This is normal in shallow clones."
+    }
     
     Write-Host "Switched to branch '$Branch' (from origin/$Branch)"
   } elseif ($localBranchExists) {
