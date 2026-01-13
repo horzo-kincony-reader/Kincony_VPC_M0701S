@@ -143,11 +143,18 @@ This implementation adds VPC-M0701S inverter support as a configurable per-SID o
 
 ## Known Limitations & Assumptions
 
-1. **ModbusMaster Library**: 
+1. **ME300 Polling Stub**:
+   - The original firmware had a full ME300 implementation that was stubbed out
+   - This PR focuses on VPC integration and maintains the stub
+   - ME300 SIDs will remain in "active" state but won't actually poll
+   - **Production use requires**: Complete ME300 polling logic restoration from original firmware
+   - The stub ensures VPC functionality can be tested without breaking existing structure
+
+2. **ModbusMaster Library**: 
    - Assumes library supports `begin(slave_id, serial)` signature
    - Tested with standard 4hel1um/ModbusMaster fork
 
-2. **Serial2 Sharing**:
+3. **Serial2 Sharing**:
    - Both ME300 and VPC share Serial2 (RS485)
    - Slave address changed via `begin()` before each operation
    - No concurrent access protection (tasks are sequential)

@@ -139,7 +139,12 @@ bool VPC_setFrequency(float freq) {
 }
 
 bool VPC_clearFault() {
-    return VPC_clearFault(vpc_legacy_node, legacy_cfg);
+    // Call the per-SID version with legacy ModbusMaster and config
+    vpc_legacy_node.clearTransmitBuffer();
+    vpc_legacy_node.clearResponseBuffer();
+    uint16_t addr = vpc_to_modbus(VPC_M0701S::FAULT_CLEAR_WRITE, legacy_cfg.addr_base);
+    uint8_t result = vpc_legacy_node.writeSingleRegister(addr, 1);
+    return (result == vpc_legacy_node.ku8MBSuccess);
 }
 
 void VPC_debugStatus() {

@@ -383,8 +383,10 @@ void AutoMultiInverter::taskPoll(){
         if(sidType[i] == TYPE_VPC_M0701S){
           vpcReadTelemetry(sid);
         } else {
-          // ME300 polling (stub - would need full implementation)
-          // For minimal change, skip ME300 details here
+          // ME300 polling - Full implementation required for production use
+          // This stub maintains ME300 SIDs in active state but doesn't poll
+          // TODO: Implement full ME300 polling logic as in original firmware
+          // For now, just mark as active to maintain backward compatibility
         }
       } else {
         // Probe inactive inverters periodically
@@ -394,6 +396,9 @@ void AutoMultiInverter::taskPoll(){
             if(vpcReadTelemetry(sid)){
               activateSid(sid, "vpc_probe");
             }
+          } else {
+            // ME300 probe - would attempt to read here
+            // TODO: Add ME300 probe logic
           }
           nextProbeAt[i] = now + backoffMs[i];
         }
