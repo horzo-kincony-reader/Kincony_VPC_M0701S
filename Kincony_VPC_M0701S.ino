@@ -379,9 +379,9 @@ static bool vpcPoll(){
   }
   return (rc1==ModbusMaster::ku8MBSuccess);
 }
-// Pomocnik do pobrania bufora odpowiedzi VPC (brak bezpośredniej funkcji w nagłówku – wykorzystamy instancję w VPC_Modbus.cpp)
-extern ModbusMaster node; // z VPC_Modbus.cpp
-static uint16_t VPC_Modbus_getResponseBuffer(uint8_t idx){ return node.getResponseBuffer(idx); }
+// Pomocnik do pobrania bufora odpowiedzi VPC (wykorzystujemy instancję legacy)
+extern ModbusMaster vpc_legacy_node; // z VPC_Modbus.cpp
+static uint16_t VPC_Modbus_getResponseBuffer(uint8_t idx){ return vpc_legacy_node.getResponseBuffer(idx); }
 
 // MQTT (minimal – Multi-SID + VPC)
 static uint32_t lastMqttAttempt=0;
