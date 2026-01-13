@@ -9,8 +9,13 @@ static inline uint16_t vpc_to_modbus(uint16_t addr_4xxxx, uint16_t addr_base) {
 
 // Read VPC status registers into telemetry structure
 bool VPC_readTelemetry(ModbusMaster& mb, const VPCConfig& cfg, VPCTelemetry& telem) {
-    // Set slave address
-    mb.begin(cfg.inverter_addr, mb.getStream());
+    // Note: We assume the ModbusMaster is already initialized with Serial2
+    // Some libraries allow changing slave with begin(slave), others need begin(slave, serial)
+    // To be safe, we'll clear buffers and proceed with the current slave setting
+    // The caller should ensure the correct slave is set before calling
+    
+    mb.clearTransmitBuffer();
+    mb.clearResponseBuffer();
     
     // Read status registers starting from RUNNING_STATUS (40180)
     // We need registers: 40180, 40181, 40182, 40183, 40184, 40185, skip to 40189
@@ -74,7 +79,6 @@ bool VPC_readTelemetry(ModbusMaster& mb, const VPCConfig& cfg, VPCTelemetry& tel
 
 // Write VPC control word (P103)
 bool VPC_writeControlWord(ModbusMaster& mb, const VPCConfig& cfg, uint16_t control_word) {
-    mb.begin(cfg.inverter_addr, mb.getStream());
     uint16_t addr = vpc_to_modbus(VPC_M0701S::PARAM_485_OPERATION, cfg.addr_base);
     uint8_t result = mb.writeSingleRegister(addr, control_word);
     return (result == mb.ku8MBSuccess);
@@ -82,7 +86,6 @@ bool VPC_writeControlWord(ModbusMaster& mb, const VPCConfig& cfg, uint16_t contr
 
 // Write VPC set frequency (P102)
 bool VPC_writeSetFrequency(ModbusMaster& mb, const VPCConfig& cfg, uint16_t freq_raw) {
-    mb.begin(cfg.inverter_addr, mb.getStream());
     uint16_t addr = vpc_to_modbus(VPC_M0701S::PARAM_485_FREQ_SET, cfg.addr_base);
     uint8_t result = mb.writeSingleRegister(addr, freq_raw);
     return (result == mb.ku8MBSuccess);
@@ -90,7 +93,6 @@ bool VPC_writeSetFrequency(ModbusMaster& mb, const VPCConfig& cfg, uint16_t freq
 
 // Clear VPC fault
 bool VPC_clearFault(ModbusMaster& mb, const VPCConfig& cfg) {
-    mb.begin(cfg.inverter_addr, mb.getStream());
     uint16_t addr = vpc_to_modbus(VPC_M0701S::FAULT_CLEAR_WRITE, cfg.addr_base);
     uint8_t result = mb.writeSingleRegister(addr, 1);  // Write >0 to clear
     return (result == mb.ku8MBSuccess);

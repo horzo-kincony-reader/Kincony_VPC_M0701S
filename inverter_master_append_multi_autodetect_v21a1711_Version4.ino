@@ -314,6 +314,9 @@ bool AutoMultiInverter::vpcReadTelemetry(uint8_t sid){
   int idx = indexOfSid(sid);
   if(idx < 0) return false;
   
+  // Set the slave address for this VPC inverter
+  me300.begin(vpcCfg[idx].inverter_addr, Serial2);
+  
   VPCTelemetry telem;
   bool ok = VPC_readTelemetry(me300, vpcCfg[idx], telem);
   
@@ -340,6 +343,9 @@ bool AutoMultiInverter::vpcWriteControl(uint8_t sid, uint16_t ctrl_word, uint16_
   int idx = indexOfSid(sid);
   if(idx < 0) return false;
   
+  // Set the slave address for this VPC inverter
+  me300.begin(vpcCfg[idx].inverter_addr, Serial2);
+  
   bool ok = VPC_writeControlWord(me300, vpcCfg[idx], ctrl_word);
   if(freq_raw > 0){
     ok &= VPC_writeSetFrequency(me300, vpcCfg[idx], freq_raw);
@@ -350,6 +356,9 @@ bool AutoMultiInverter::vpcWriteControl(uint8_t sid, uint16_t ctrl_word, uint16_
 bool AutoMultiInverter::vpcClearFault(uint8_t sid){
   int idx = indexOfSid(sid);
   if(idx < 0) return false;
+  
+  // Set the slave address for this VPC inverter
+  me300.begin(vpcCfg[idx].inverter_addr, Serial2);
   
   return VPC_clearFault(me300, vpcCfg[idx]);
 }
