@@ -771,15 +771,17 @@ static void handleConfigPost(){
 // ===== Inverter (Multi-SID pełny panel) =====
 // (sekcja jak w Twojej bazie – bez zmian, pomijana dla zwięzłości – zachowane handleInverterPage/State/StateAll/handleInverterCmd)
 
-// ===== VPC WWW =====
+// ===== VPC/Inverter Control Page (VPC-M0701S + ME300) =====
 static void handleVPCPage(){
   if(!requireAuth()) return;
-  String html="<!DOCTYPE html><html><head><meta charset='utf-8'><title>VPC M0701S</title>"
+  String html="<!DOCTYPE html><html><head><meta charset='utf-8'><title>Inverter Control</title>"
               "<meta name='viewport' content='width=device-width,initial-scale=1'>"
               "<style>body{font-family:Arial;margin:16px;background:#f5f6fa;color:#222}"
               ".card{background:#fff;padding:16px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.12);margin-bottom:12px}"
               "button{padding:8px 12px;background:#1976d2;color:#fff;border:none;border-radius:6px;cursor:pointer;margin:4px}"
-              "input{padding:6px;border:1px solid #bbb;border-radius:6px}"
+              "input,select{padding:6px;border:1px solid #bbb;border-radius:6px;margin:4px}"
+              "h3{margin-top:0;color:#1976d2}"
+              ".section{margin-bottom:16px}"
               "</style>"
               "<script>"
               "async function refresh(){ try{const s=await fetch('/vpc/status',{cache:'no-store'}).then(r=>r.json());"
@@ -787,24 +789,53 @@ static void handleVPCPage(){
               " document.getElementById('fault').textContent=s.fault_status;"
               " }catch(e){} setTimeout(refresh,1000); }"
               "async function cmd(c,v){ let u='/vpc/cmd?c='+encodeURIComponent(c); if(v!==undefined) u+='&v='+encodeURIComponent(v);"
-              " try{await fetch(u,{cache:'no-store'});}catch(e){} }"
+              " try{await fetch(u,{cache:'no-store'});alert('Command sent');}catch(e){alert('Error: '+e);} }"
               "function setf(){ const v=document.getElementById('freq').value; if(v) cmd('setf',v); }"
               "window.onload=refresh;"
               "</script></head><body>"
-              "<div class='card'><h2>VPC M0701S Status</h2>"
+              "<h2>Inverter Control Panel</h2>"
+              
+              "<div class='card'><h3>VPC M0701S (Legacy)</h3>"
+              "<div class='section'>"
               "<div>Running Status: <span id='run'>...</span></div>"
               "<div>Fault Status: <span id='fault'>...</span></div>"
-              "<div style='margin-top:8px'>"
+              "</div>"
+              "<div class='section'>"
               "<button onclick='cmd(\"start\")'>Start</button>"
               "<button onclick='cmd(\"stop\")'>Stop</button>"
               "<button onclick='cmd(\"reset\")'>Reset Fault</button>"
               "</div>"
-              "<div style='margin-top:8px'>"
-              "<input id='freq' type='number' step='0.01' min='0' max='400' placeholder='Hz'>"
+              "<div class='section'>"
+              "<input id='freq' type='number' step='0.01' min='0' max='400' placeholder='Frequency (Hz)' style='width:150px'>"
               "<button onclick='setf()'>Set Frequency</button>"
+              "</div></div>"
+              
+              "<div class='card'><h3>Delta ME300 Support</h3>"
+              "<div class='section'>"
+              "<p><strong>Note:</strong> ME300 control is integrated into the Multi-SID system.</p>"
+              "<p>Use <a href='/inverter_master' style='color:#1976d2'>Inverter Multi-SID</a> for ME300 control.</p>"
+              "<p>Or configure per-SID type at <a href='/inverter_master/config' style='color:#1976d2'>Inverter Config</a>.</p>"
               "</div>"
-              "<p><a href='/' style='padding:8px 12px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none'>Back</a></p>"
-              "</div></body></html>";
+              "<div class='section'>"
+              "<p><strong>ME300 Features Available:</strong></p>"
+              "<ul>"
+              "<li>Per-SID configuration (SID 1-6)</li>"
+              "<li>Start/Stop control via ModbusTCP</li>"
+              "<li>Frequency setting (0-400 Hz)</li>"
+              "<li>Status monitoring (running, fault, current, voltage)</li>"
+              "<li>Direction control (FWD/REV)</li>"
+              "</ul>"
+              "</div></div>"
+              
+              "<div class='card'><h3>Quick Access</h3>"
+              "<p>"
+              "<a href='/inverter_master' style='padding:8px 12px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none;margin:4px;display:inline-block'>Multi-SID Panel</a>"
+              "<a href='/inverter_master/config' style='padding:8px 12px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none;margin:4px;display:inline-block'>Configure SID Types</a>"
+              "<a href='/modbus/tcp' style='padding:8px 12px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none;margin:4px;display:inline-block'>ModbusTCP Info</a>"
+              "<a href='/' style='padding:8px 12px;background:#666;color:#fff;border-radius:6px;text-decoration:none;margin:4px;display:inline-block'>Back to Main</a>"
+              "</p></div>"
+              
+              "</body></html>";
   server.send(200,"text/html", html);
 }
 static void handleVPCStatus(){
