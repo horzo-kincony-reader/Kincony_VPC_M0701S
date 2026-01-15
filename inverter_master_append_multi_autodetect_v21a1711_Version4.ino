@@ -222,6 +222,33 @@ private:
   static const char PAGE_HTML[] PROGMEM;
 };
 
+// ===== Global Instance and extern "C" Wrappers =====
+// These must appear early to be available when Kincony_VPC_M0701S.ino calls them
+static AutoMultiInverter* g_inv = nullptr;
+
+extern "C" {
+  void inverter_master_begin(){
+    if(!g_inv) g_inv = new AutoMultiInverter();
+    g_inv->begin();
+    g_inv->loadSIDConfig();
+  }
+  
+  bool inverter_rtu_apply(uint8_t sid_unused, uint32_t baud, uint8_t parity, uint16_t pollMs){
+    if(!g_inv) return false;
+    return g_inv->applyRTU(baud, parity, pollMs);
+  }
+  
+  uint32_t inverter_get_last_state_pub(){
+    if(!g_inv) return 0;
+    return g_inv->getLastStatePub();
+  }
+  
+  uint32_t inverter_get_last_decode_pub(){
+    if(!g_inv) return 0;
+    return g_inv->getLastDecodePub();
+  }
+}
+
 // ---- IMPLEMENTACJA ----
 // (pełna implementacja – bez zmian funkcjonalnych względem wersji bazowej)
 // UWAGA: ten moduł jest wykorzystywany tylko, gdy RTU Mode = ME300 (vpc_mode_global == false)
@@ -768,29 +795,3 @@ void AutoMultiInverter::sse(){}
 String AutoMultiInverter::snapshotJson(uint8_t sid){ return "{}"; }
 
 const char AutoMultiInverter::PAGE_HTML[] PROGMEM = "";
-
-// ===== Global Instance and extern "C" Wrappers =====
-static AutoMultiInverter* g_inv = nullptr;
-
-extern "C" {
-  void inverter_master_begin(){
-    if(!g_inv) g_inv = new AutoMultiInverter();
-    g_inv->begin();
-    g_inv->loadSIDConfig();
-  }
-  
-  bool inverter_rtu_apply(uint8_t sid_unused, uint32_t baud, uint8_t parity, uint16_t pollMs){
-    if(!g_inv) return false;
-    return g_inv->applyRTU(baud, parity, pollMs);
-  }
-  
-  uint32_t inverter_get_last_state_pub(){
-    if(!g_inv) return 0;
-    return g_inv->getLastStatePub();
-  }
-  
-  uint32_t inverter_get_last_decode_pub(){
-    if(!g_inv) return 0;
-    return g_inv->getLastDecodePub();
-  }
-}
