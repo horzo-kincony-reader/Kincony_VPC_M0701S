@@ -129,6 +129,10 @@ public:
   uint8_t rtuParityToSerial(uint8_t p);
   void checkNVSStats();
   void clearRTUKeys();
+  
+  // Per-SID configuration (public for extern "C" access)
+  void loadSIDConfig();
+  void saveSIDConfig(uint8_t sid);
 
   uint32_t getLastStatePub(){ return lastStatePub[0]; }
   uint32_t getLastDecodePub(){ return lastDecodePub[0]; }
@@ -142,8 +146,6 @@ private:
   void saveMqtt();
   void loadHistAll();
   void saveHist(uint8_t sid);
-  void loadSIDConfig();
-  void saveSIDConfig(uint8_t sid);
 
   bool rtuReadAuto(uint8_t sid,uint16_t reg,uint16_t& val);
   bool rtuWrite(uint8_t sid,uint16_t reg,uint16_t val);

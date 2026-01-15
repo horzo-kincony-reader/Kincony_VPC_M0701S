@@ -143,8 +143,8 @@ struct NetCfg {
 struct TCPShadow { bool enabled=true; uint16_t port=502; } tcpCfg;
 struct RTUShadow { uint32_t baud=9600; uint8_t parity=0; uint16_t pollMs=500; } rtuCfg;
 
-// VPC konfiguracja i runtime
-struct VPCConfig { uint8_t addr=1; bool enabled=true; uint16_t pollMs=600; } vpcCfg;
+// VPC legacy configuration (for backward compatibility with old VPC endpoint)
+struct VPCLegacyConfig { uint8_t addr=1; bool enabled=true; uint16_t pollMs=600; } vpcLegacyCfg;
 static uint32_t vpcLastPoll=0;
 static uint16_t vpcRunningStatus=0;
 static uint16_t vpcFaultStatus=0;
@@ -218,11 +218,11 @@ static void loadCfg(){
 
   // vpc (VPC M0701S)
   prefs.begin("vpc", true);
-  vpcCfg.addr   = prefs.getUChar("addr", 1);
-  vpcCfg.enabled= prefs.getBool("enabled", true);
-  vpcCfg.pollMs = prefs.getUShort("poll", 600);
+  vpcLegacyCfg.addr   = prefs.getUChar("addr", 1);
+  vpcLegacyCfg.enabled= prefs.getBool("enabled", true);
+  vpcLegacyCfg.pollMs = prefs.getUShort("poll", 600);
   prefs.end();
-  vpcCfg.pollMs = constrain((int)vpcCfg.pollMs, 200, 5000);
+  vpcLegacyCfg.pollMs = constrain((int)vpcLegacyCfg.pollMs, 200, 5000);
 }
 static void saveCfg(){
   prefs.begin("kc868cfg", false);
@@ -249,9 +249,9 @@ static void saveCfg(){
   prefs.end();
 
   prefs.begin("vpc", false);
-  prefs.putUChar("addr", vpcCfg.addr);
-  prefs.putBool("enabled", vpcCfg.enabled);
-  prefs.putUShort("poll", vpcCfg.pollMs);
+  prefs.putUChar("addr", vpcLegacyCfg.addr);
+  prefs.putBool("enabled", vpcLegacyCfg.enabled);
+  prefs.putUShort("poll", vpcLegacyCfg.pollMs);
   prefs.end();
 }
 
@@ -351,12 +351,12 @@ static bool rtuSyncInitialFrequency(uint8_t sid, uint16_t reported_setf_010Hz, u
 static void setupVPC(){
   // Serial2: RS485 RTU zgodnie z globalną konfiguracją
   Serial2.begin(rtuCfg.baud, (rtuCfg.parity==1)?SERIAL_8E1:(rtuCfg.parity==2)?SERIAL_8O1:SERIAL_8N1, RS485_RX_PIN, RS485_TX_PIN);
-  VPC_init(Serial2, vpcCfg.addr);
+  VPC_init(Serial2, vpcLegacyCfg.addr);
   Serial.printf("[VPC] init addr=%u baud=%lu par=%u poll=%u\n",
-    (unsigned)vpcCfg.addr, (unsigned long)rtuCfg.baud,(unsigned)rtuCfg.parity,(unsigned)vpcCfg.pollMs);
+    (unsigned)vpcLegacyCfg.addr, (unsigned long)rtuCfg.baud,(unsigned)rtuCfg.parity,(unsigned)vpcLegacyCfg.pollMs);
 }
 static bool vpcPoll(){
-  if(!vpcCfg.enabled) return false;
+  if(!vpcLegacyCfg.enabled) return false;
   uint8_t rc1 = ModbusMaster::ku8MBIllegalFunction; // placeholder
   uint8_t rc2 = ModbusMaster::ku8MBIllegalFunction;
   // Odczyt Running Status (UWAGA: biblioteka zwykle używa adresów 0..65535; jeśli potrzeba, dopasuj offset)
@@ -729,10 +729,10 @@ static void handleConfigGet(){
   html.replace("%P0%", rtuCfg.parity==0?"selected":"");
   html.replace("%P1%", rtuCfg.parity==1?"selected":"");
   html.replace("%P2%", rtuCfg.parity==2?"selected":"");
-  html.replace("%VPC_ON%", vpcCfg.enabled?"selected":"");
-  html.replace("%VPC_OFF%", vpcCfg.enabled?"":"selected");
-  html.replace("%VPC_ADDR%", String(vpcCfg.addr));
-  html.replace("%VPC_POLL%", String(vpcCfg.pollMs));
+  html.replace("%VPC_ON%", vpcLegacyCfg.enabled?"selected":"");
+  html.replace("%VPC_OFF%", vpcLegacyCfg.enabled?"":"selected");
+  html.replace("%VPC_ADDR%", String(vpcLegacyCfg.addr));
+  html.replace("%VPC_POLL%", String(vpcLegacyCfg.pollMs));
   html.replace("%TCP_ON%", tcpCfg.enabled?"selected":"");
   html.replace("%TCP_OFF%", tcpCfg.enabled?"":"selected");
   html.replace("%TCP_PORT%", String(tcpCfg.port));
@@ -756,9 +756,9 @@ static void handleConfigPost(){
   { uint32_t baud=(uint32_t)server.arg("rtu_baud").toInt(); if(baud) rtuCfg.baud=baud; }
   { int par=server.arg("rtu_par").toInt(); if(par>=0&&par<=2) rtuCfg.parity=par; }
   { int poll=server.arg("rtu_poll").toInt(); if(poll>=100&&poll<=5000) rtuCfg.pollMs=poll; }
-  vpcCfg.enabled = server.arg("vpc_en")=="1";
-  { int a=server.arg("vpc_addr").toInt(); if(a>=1&&a<=247) vpcCfg.addr=(uint8_t)a; }
-  { int p=server.arg("vpc_poll").toInt(); if(p>=200&&p<=5000) vpcCfg.pollMs=(uint16_t)p; }
+  vpcLegacyCfg.enabled = server.arg("vpc_en")=="1";
+  { int a=server.arg("vpc_addr").toInt(); if(a>=1&&a<=247) vpcLegacyCfg.addr=(uint8_t)a; }
+  { int p=server.arg("vpc_poll").toInt(); if(p>=200&&p<=5000) vpcLegacyCfg.pollMs=(uint16_t)p; }
   tcpCfg.enabled = server.arg("tcp_en")=="1";
   { int tp=server.arg("tcp_port").toInt(); if(tp>=1&&tp<=65535) tcpCfg.port=tp; }
   saveCfg();
@@ -986,9 +986,9 @@ static void taskIO(void*){
     }
 
     // VPC Poll
-    if(vpcCfg.enabled){
+    if(vpcLegacyCfg.enabled){
       uint32_t now=millis();
-      if(now - vpcLastPoll >= vpcCfg.pollMs){
+      if(now - vpcLastPoll >= vpcLegacyCfg.pollMs){
         vpcPoll();
         vpcLastPoll = now;
       }
