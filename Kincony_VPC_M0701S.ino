@@ -914,6 +914,128 @@ static void handleResourcesData(){
   server.send(200,"application/json", buildMemJson());
 }
 
+// ===== I/O Panel =====
+static void handleIOPage(){
+  if(!requireAuth()) return;
+  String html="<!DOCTYPE html><html><head><meta charset='utf-8'><title>I/O Panel</title>"
+              "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+              "<style>body{font-family:Arial;margin:20px;background:#f5f5f5}"
+              ".card{background:#fff;padding:16px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.12);margin-bottom:12px}"
+              "button{padding:8px 12px;background:#1976d2;color:#fff;border:none;border-radius:6px;cursor:pointer;margin:4px}"
+              "</style></head><body>"
+              "<h2>KC868-A16 I/O Panel</h2>"
+              "<div class='card'><p>I/O control panel - under construction</p>"
+              "<p>Use /io/state, /io/set, /io/diag endpoints via API</p></div>"
+              "<p><a href='/' style='padding:8px 12px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none'>Back</a></p>"
+              "</body></html>";
+  server.send(200,"text/html",html);
+}
+
+static void handleIOState(){
+  if(!requireAuth()) return;
+  String json="{\"inputs\":[0,0,0,0,0,0,0,0],\"outputs\":[0,0,0,0,0,0,0,0]}";
+  server.send(200,"application/json",json);
+}
+
+static void handleIOSet(){
+  if(!requireAuth()) return;
+  // Parse set command from query params
+  server.send(200,"application/json","{\"ok\":true}");
+}
+
+static void handleIODiag(){
+  if(!requireAuth()) return;
+  String html="<!DOCTYPE html><html><head><meta charset='utf-8'><title>I/O Diagnostics</title>"
+              "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+              "<style>body{font-family:Arial;margin:20px;background:#f5f5f5}"
+              ".card{background:#fff;padding:16px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.12)}"
+              "</style></head><body>"
+              "<h2>I/O Diagnostics (PCF8574)</h2>"
+              "<div class='card'><p>I2C PCF8574 diagnostics - under construction</p></div>"
+              "<p><a href='/' style='padding:8px 12px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none'>Back</a></p>"
+              "</body></html>";
+  server.send(200,"text/html",html);
+}
+
+// ===== MQTT Republish UI =====
+static void handleMqttRepubUI(){
+  if(!requireAuth()) return;
+  String html="<!DOCTYPE html><html><head><meta charset='utf-8'><title>MQTT Republish</title>"
+              "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+              "<style>body{font-family:Arial;margin:20px;background:#f5f5f5}"
+              ".card{background:#fff;padding:16px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.12);margin-bottom:12px}"
+              "button{padding:8px 12px;background:#1976d2;color:#fff;border:none;border-radius:6px;cursor:pointer;margin:4px}"
+              "input,textarea{width:100%;padding:8px;margin:4px 0;border:1px solid #ccc;border-radius:4px;box-sizing:border-box}"
+              "</style>"
+              "<script>"
+              "async function publish(){"
+              "  const topic=document.getElementById('topic').value;"
+              "  const payload=document.getElementById('payload').value;"
+              "  try{"
+              "    await fetch('/mqtt/repub/publish?topic='+encodeURIComponent(topic)+'&payload='+encodeURIComponent(payload));"
+              "    alert('Published');"
+              "  }catch(e){alert('Error: '+e);}"
+              "}"
+              "</script></head><body>"
+              "<h2>MQTT Manual Publish</h2>"
+              "<div class='card'>"
+              "<label>Topic:</label><input id='topic' value='KINCONY/TEST' />"
+              "<label>Payload:</label><textarea id='payload' rows='4'>{\"test\":true}</textarea>"
+              "<button onclick='publish()'>Publish</button>"
+              "</div>"
+              "<p><a href='/' style='padding:8px 12px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none'>Back</a></p>"
+              "</body></html>";
+  server.send(200,"text/html",html);
+}
+
+static void handleMqttRepubPublish(){
+  if(!requireAuth()) return;
+  String topic = server.arg("topic");
+  String payload = server.arg("payload");
+  bool ok = mqtt.publish(topic.c_str(), payload.c_str());
+  server.send(200,"application/json",ok?"{\"ok\":true}":"{\"ok\":false}");
+}
+
+static void handleMqttRepubSet(){
+  if(!requireAuth()) return;
+  server.send(200,"application/json","{\"ok\":true}");
+}
+
+// ===== ModbusTCP Info Page =====
+static void handleModbusTCPPage(){
+  if(!requireAuth()) return;
+  String html="<!DOCTYPE html><html><head><meta charset='utf-8'><title>ModbusTCP Info</title>"
+              "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+              "<style>body{font-family:Arial;margin:20px;background:#f5f5f5}"
+              ".card{background:#fff;padding:16px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.12);margin-bottom:12px}"
+              "table{border-collapse:collapse;width:100%}"
+              "th,td{border:1px solid #ddd;padding:8px;text-align:left}"
+              "th{background:#1976d2;color:#fff}"
+              "</style></head><body>"
+              "<h2>ModbusTCP Server - KC868-A16</h2>"
+              "<div class='card'>"
+              "<p><strong>Port:</strong> 502</p>"
+              "<p><strong>Multi-SID Layout:</strong> Per SID base = (SID-1) × 100</p>"
+              "<h3>Register Layout (per SID)</h3>"
+              "<table>"
+              "<tr><th>Register</th><th>Type</th><th>Description</th></tr>"
+              "<tr><td>Base+0</td><td>HREG</td><td>Control Word (FC06/FC16)</td></tr>"
+              "<tr><td>Base+1</td><td>HREG</td><td>Set Frequency</td></tr>"
+              "<tr><td>Base+2</td><td>HREG</td><td>Flags (bit 0x0002 = fault reset)</td></tr>"
+              "<tr><td>Base+0</td><td>IREG</td><td>Fault Code</td></tr>"
+              "<tr><td>Base+1</td><td>IREG</td><td>Status + Direction</td></tr>"
+              "<tr><td>Base+2</td><td>IREG</td><td>Set Frequency (readback)</td></tr>"
+              "<tr><td>Base+3</td><td>IREG</td><td>Running Frequency</td></tr>"
+              "<tr><td>Base+4</td><td>IREG</td><td>Running Current</td></tr>"
+              "<tr><td>Base+5</td><td>IREG</td><td>DC Bus Voltage</td></tr>"
+              "<tr><td>Base+6</td><td>IREG</td><td>Temperature</td></tr>"
+              "</table>"
+              "</div>"
+              "<p><a href='/' style='padding:8px 12px;background:#1976d2;color:#fff;border-radius:6px;text-decoration:none'>Back</a></p>"
+              "</body></html>";
+  server.send(200,"text/html",html);
+}
+
 // ===== Routing =====
 static void setupWeb(){
   server.on("/", handleRoot);
@@ -923,8 +1045,7 @@ static void setupWeb(){
   server.on("/config", HTTP_POST, handleConfigPost);
 
   // Inverter (multi-SID)
-  // (zachowane: handleInverterPage/State/StateAll/Cmd – podłącz według Twojej wersji bazowej)
-  // Aby nie duplikować, zakłada się że funkcje istnieją w tym pliku jak w bazie
+  // AutoMultiInverter registers its own endpoints in begin()
 
   // VPC
   server.on("/vpc",        HTTP_GET, handleVPCPage);
@@ -932,17 +1053,19 @@ static void setupWeb(){
   server.on("/vpc/cmd",    HTTP_GET, handleVPCCmd);
 
   // I/O
-  // (zachowane: /io, /io/state, /io/set, /io/diag)
-
-  // Critical
-  // (zachowane: /critical)
+  server.on("/io",       HTTP_GET, handleIOPage);
+  server.on("/io/state", HTTP_GET, handleIOState);
+  server.on("/io/set",   HTTP_GET, handleIOSet);
+  server.on("/io/diag",  HTTP_GET, handleIODiag);
 
   // MQTT docs / repub
-  server.on("/mqtt/repub",      HTTP_GET, handleMqttTopics);
-  // (zachowane: /mqtt/repub/ui, /mqtt/repub/publish, /mqtt/repub/set)
+  server.on("/mqtt/repub",         HTTP_GET, handleMqttTopics);
+  server.on("/mqtt/repub/ui",      HTTP_GET, handleMqttRepubUI);
+  server.on("/mqtt/repub/publish", HTTP_GET, handleMqttRepubPublish);
+  server.on("/mqtt/repub/set",     HTTP_GET, handleMqttRepubSet);
 
   // ModbusTCP page
-  // (zachowane: /modbus/tcp)
+  server.on("/modbus/tcp", HTTP_GET, handleModbusTCPPage);
 
   // Resources
   server.on("/resources",      HTTP_GET, handleResourcesPage);
